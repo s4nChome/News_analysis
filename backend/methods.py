@@ -62,7 +62,8 @@ def is_real_news(url=None,title=None,content=None):
 # 提取新闻关键词
 def extract_keywords(content):
     jieba.analyse.set_stop_words("backend/cn_stopwords.txt")
-    keywords = jieba.analyse.extract_tags(content, topK=5)  
+    keywords = jieba.analyse.extract_tags(content, topK=5)
+    keywords = ','.join(keywords)
     return keywords
 
 # 保存新闻数据
@@ -70,7 +71,7 @@ def save_news_data(res):
     save_news_data = Logs(
         url=res['url'],
         domain_category=res['domain_category'],
-        key_words=', '.join(res['key_words']),
+        key_words=res['key_words'],
         title=res['title'],
         title_decision=res['title_decision'],
         title_score=res['title_score'],
