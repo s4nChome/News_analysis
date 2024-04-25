@@ -82,6 +82,7 @@ def save_news_data(res):
     )
     db.session.add(save_news_data)
     db.session.commit()
+    return save_news_data.id
 
 # 分析新闻
 def analysis_news(content):
@@ -107,4 +108,9 @@ def api_response(data=None, message=None, code=200):
     }
     return jsonify(response)
 
-
+# 保存分析结果
+def save_analysis_result(id, result):
+    save_analysis_result = Logs.query.filter_by(id=id).first()
+    save_analysis_result.analysis_result = result
+    db.session.commit()
+    return save_analysis_result.id

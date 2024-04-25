@@ -6,21 +6,34 @@
     </el-header>
 
     <el-main>
-      <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 2 }" placeholder="请输入新闻链接或新闻内容" v-model="input_text" style="width: 60%; margin-top: 20px;"></el-input>
+      <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 2 }" placeholder="请输入新闻链接或新闻内容" v-model="input_text" style="width: 60%; margin-top: 5px;"></el-input>
       <div style="padding-top: 20px;">
-        <el-button type="danger" @click="clearAll">清空输入</el-button>
+        <el-button type="warning" @click="clearAll">清空内容</el-button>
         <el-button type="success" @click="getResult">获取新闻</el-button>
         <el-button type="primary" @click="getAnalysis">分析新闻</el-button>
       </div>
       <div>
         <el-descriptions v-loading="loading1" class="margin-top" title="新闻信息" :column="2" :size="size" border>
-            <el-descriptions-item label="新闻网址">
+          <el-descriptions-item label="新闻网址">
             <el-link :href="url" target="_blank">{{ url }}</el-link>
-            </el-descriptions-item>
-            <el-descriptions-item 
-            label="网址可信度">
-            <p :class="domain_category">{{ domain_category }}</p>
-            </el-descriptions-item>
+          </el-descriptions-item>
+          <el-descriptions-item label="网址可信度">
+            <template v-if="['trusted','credible'].includes(domain_category)">
+              <el-tag type="success">可信</el-tag>
+            </template>
+            <template v-else-if="['unknown','unsure'].includes(domain_category)">
+              <el-tag type="primary">未知</el-tag>
+            </template>
+            <template v-else-if="['fake', 'unreliable', 'bias', 'clickbait', 'conspiracy', 'hate', 'junksci', 'rumor'].includes(domain_category)">
+              <el-tag type="danger">不可信</el-tag>
+            </template>
+            <template v-else-if="['satire', 'parody', 'political', 'state'].includes(domain_category)">
+              <el-tag type="warning">可疑</el-tag>
+            </template>
+            <template v-else>
+              <el-tag type="info">无</el-tag>
+            </template>
+          </el-descriptions-item>
           <el-descriptions-item label="标题可信度">
             <el-progress :percentage="Math.floor(title_score * 100)" :color="getProgressColor"></el-progress>
           </el-descriptions-item>
@@ -40,12 +53,14 @@
       </div>
 
       <el-descriptions v-loading="loading2" class="margin-top" title="分析结果" :column="1" :size="size" border style="margin-top: 30px;">
-            <el-descriptions-item label="内容分析">
-              <div style="min-height: 16.5em; max-height: 16.5em; overflow-y: auto; line-height: 1.5em;">{{ content_analysis }}</div>
-            </el-descriptions-item>
+        <el-descriptions-item label="内容分析">
+          <div style="min-height: 16.5em; max-height: 16.5em; overflow-y: auto; line-height: 1.5em;">{{ content_analysis }}</div>
+        </el-descriptions-item>
       </el-descriptions>
-
-
+      <div style="margin-top: 10px;float: right;">
+        <el-button type="primary" size="default" @click="getHistory">查看历史</el-button>
+        <el-button type="primary" size="default" @click="getAnalysisAgain">重新分析</el-button>
+      </div>
     </el-main>
   </el-container>
 </template>
@@ -60,6 +75,7 @@ export default {
     return {
       size: null,
       input_text: '',
+      id: '',
       url: '',
       domain_category: '',
       key_words: '',
@@ -92,28 +108,29 @@ export default {
 
     getResult() {
       if (this.input_text === '') {
-      this.$notify.error('请输入新闻链接或新闻内容');
-      return;
+        this.$notify.error('请输入新闻链接或新闻内容');
+        return;
       } else {
-      this.loading1 = true;
-      axios.post('http://127.0.0.1:5000/api/getResult', {
-        data: this.input_text
-      }).then(res => {
-        this.url = res.data.data.url || "无";
-        this.domain_category = res.data.data.domain_category || "无";
-        this.key_words = res.data.data.key_words;
-        this.title = res.data.data.title || "无";
-        this.title_decision = res.data.data.title_decision;
-        this.title_score = res.data.data.title_score;
-        this.content = res.data.data.content;
-        this.content_decision = res.data.data.content_decision;
-        this.content_score = res.data.data.content_score;
-        this.$notify.success(res.data.message);
-      }).catch(err => {
-        this.$notify.error(err);
-      }).finally(() => {
-        this.loading1 = false;
-      });
+        this.loading1 = true;
+        axios.post('http://127.0.0.1:5000/api/getResult', {
+          data: this.input_text
+        }).then(res => {
+          this.id = res.data.data.id;
+          this.url = res.data.data.url || "无";
+          this.domain_category = res.data.data.domain_category || "无";
+          this.key_words = res.data.data.key_words;
+          this.title = res.data.data.title || "无";
+          this.title_decision = res.data.data.title_decision;
+          this.title_score = res.data.data.title_score;
+          this.content = res.data.data.content;
+          this.content_decision = res.data.data.content_decision;
+          this.content_score = res.data.data.content_score;
+          this.$notify.success(res.data.message);
+        }).catch(err => {
+          this.$notify.error(err);
+        }).finally(() => {
+          this.loading1 = false;
+        });
       }
     },
 
@@ -129,24 +146,33 @@ export default {
 
     getAnalysis() {
       if (this.content === "") {
-      this.$notify.error('请先获取新闻信息');
-      return;
+        this.$notify.error('请先获取新闻信息');
+        return;
       } else {
-      this.loading2 = true;
-      axios.post('http://127.0.0.1:5000/api/analysis', {
-        data: this.title !== "无" ? this.title : this.content
-      }).then(res => {
-        this.content_analysis = res.data.data;
-        this.$notify.success(res.data.message);
-      }).catch(err => {
-        this.$notify.error(err);
-      }).finally(() => {
-        this.loading2 = false;
-      });
+        this.loading2 = true;
+        axios.post('http://127.0.0.1:5000/api/analysis', {
+          id: this.id,
+          data: this.title !== "无" ? this.title : this.content
+        }).then(res => {
+          this.content_analysis = res.data.data;
+          this.$notify.success(res.data.message);
+        }).catch(err => {
+          this.$notify.error(err);
+        }).finally(() => {
+          this.loading2 = false;
+        });
       }
     },
 
-}
+    getAnalysisAgain() {
+      this.content_analysis = '';
+      this.getAnalysis();
+    },
+
+    getHistory() {
+      this.$router.push({ path: '/history' });
+    }
+  }
 }
 </script>
 
@@ -171,21 +197,5 @@ export default {
 
 .el-descriptions-item__label {
   width: 6.5%;
-}
-
-
-/* 可信的 */
-.trusted, .credible {
-  color: green; 
-  
-}
-/* 不可信的 */
-.unreliable, .fake, .bias, .clickbait, .conspiracy, .hate, .junksci, .rumor {
-  color: red; 
-}
-
-/* 未知或不确定 */
-.unknown, .unsure, .satire, .parody, .political, .state{
-  color: orange; 
 }
 </style>

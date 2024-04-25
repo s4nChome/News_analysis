@@ -13,6 +13,7 @@ class Logs(db.Model):
     content = db.Column(db.Text,nullable=True)
     content_decision = db.Column(db.String(255),nullable=True)
     content_score = db.Column(db.Float,nullable=True)
+    analysis_result = db.Column(db.Text,nullable=True)
     time = db.Column(db.DateTime, nullable=True)
 
 # with app.app_context():

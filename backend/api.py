@@ -40,7 +40,8 @@ def getResult():
                     "domain_category": domain_category
                 }
             
-            save_news_data(res)
+            id = save_news_data(res)
+            res['id'] = id
             return api_response(data=res,message='新闻获取成功！')
 
         else:
@@ -58,7 +59,8 @@ def getResult():
                 "domain_category": domain_category
             }
 
-            save_news_data(res)
+            id = save_news_data(res)
+            res['id'] = id
             return api_response(data=res,message='新闻真实性判断成功！')
         
             
@@ -70,9 +72,48 @@ def getResult():
 @app.route('/api/analysis', methods=['POST'])
 def analysis():
     try:
+        id = request.json.get('id')
         content = request.json.get('data')
         res = analysis_news(content)
+        test = save_analysis_result(id,res)
+        print(test)
         return api_response(data=res,message='新闻分析成功！')
     
     except Exception as e:
         return api_response(message=str(e), code=400)
+    
+
+@app.route('/api/history', methods=['GET'])
+def getHistory():
+    pageNum = request.args.get('pageNum', 1,type=int)
+    pageSize = request.args.get('pageSize', 10,type=int)
+
+    total = Logs.query.count()
+    totalPages = (total - 1) // pageSize + 1
+
+    if pageNum > totalPages:
+        pageNum = totalPages
+
+    history_list = Logs.query.paginate(page=pageNum, per_page=pageSize, error_out=False)
+
+    res = {
+        "total": total,
+        "list": [
+            {
+                "id":Logs.id,
+                "url":Logs.url,
+                "domain_category":Logs.domain_category,
+                "title":Logs.title,
+                "key_words":Logs.key_words,
+                "content":Logs.content,
+                "title_decision":Logs.title_decision,
+                "title_score":Logs.title_score,
+                "content_decision":Logs.content_decision,
+                "content_score":Logs.content_score,
+                "time":Logs.time,
+                "analysis_result":Logs.analysis_result
+            }
+            for Logs in history_list.items
+        ]
+    }
+    return api_response(data=res,message='历史记录获取成功！')
