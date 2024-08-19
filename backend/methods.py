@@ -61,7 +61,7 @@ def is_real_news(url=None,title=None,content=None):
 
 # 提取新闻关键词
 def extract_keywords(content):
-    jieba.analyse.set_stop_words("backend/cn_stopwords.txt")
+    jieba.analyse.set_stop_words("/home/s4nchome/文档/Code/military_news_analysis/backend/cn_stopwords.txt")
     keywords = jieba.analyse.extract_tags(content, topK=5)
     keywords = ','.join(keywords)
     return keywords

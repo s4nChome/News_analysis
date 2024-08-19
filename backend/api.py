@@ -1,10 +1,21 @@
 from flask import request
 from app import app
 from methods import *
+from spider import *
 
 @app.route('/')
 def hello():
     return 'Flask is running!'
+
+@app.route('/api/getUrls', methods=['POST'])
+def getUrls():
+    try:
+        data = request.json.get('data')
+        res = scrape_links_and_titles(data)
+        print(res)
+        return api_response(data=res,message='链接获取成功！')
+    except Exception as e:
+        return api_response(message=str(e), code=400)
 
 @app.route('/api/getResult', methods=['POST'])
 def getResult():

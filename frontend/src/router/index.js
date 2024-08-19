@@ -11,10 +11,20 @@ const routes = [
     component: HomeView
   },
   {
+    path: '/mutil',
+    name: 'mutil',
+    component: () => import(/* webpackChunkName: "about" */ '../views/MutilScrapeView.vue')
+  },
+  {
     path: '/history',
     name: 'history',
     component: () => import(/* webpackChunkName: "about" */ '../views/HistoryView.vue')
   },
+  {
+    path: '/single',
+    name: 'single',
+    component: () => import(/* webpackChunkName: "about" */ '../views/SingleScrapeView.vue')
+  }
 ]
 
 const router = new VueRouter({
