@@ -129,7 +129,7 @@ export default {
     },
 
     returnHome() {
-      this.$router.push({ path: '/' });
+      this.$router.push({ path: '/single' });
     }
   },
 }
